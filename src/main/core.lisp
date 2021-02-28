@@ -1,42 +1,49 @@
-(in-package :cl-user)
+
 (defpackage cl-annot.core
   (:nicknames :annot.core)
   (:use :cl)
-  (:export :annotation-real
-           :annotation-arity
-           :annotation-inline-p
-           :annotation-form
-           :annotation-form-p
-           :%annotation))
+  (:export :make-annot :annot-name
+           :annot-arity :annot-expander
+           :find-annot :expand-annot))
 (in-package :annot.core)
 
-(defun annotation-real (annot)
-  "Return the real annotation of ANNOT."
-  (get annot 'annotation-real))
+(defstruct annot
+  (name     nil :type symbol :read-only t)
+  (arity    nil :type fixnum :read-only t)
+  (expander nil :type function :read-only t))
 
-(defun (setf annotation-real) (real annot)
-  (setf (get annot 'annotation-real) real))
+(defun add-annot! (annot)
+  (setf (get 'annotations (annot-name annot)) annot))
 
-(defun annotation-arity (annot)
-  "Return the number of arguments of ANNOT."
-  (or (get annot 'annotation-arity) 1))
+(defmacro define-annot (name params &body body)
+  `(add-annot!
+    (make-annot :name ',name
+                :arity ,(length params)
+                :expander (lambda ,params ,@body))))
 
-(defun (setf annotation-arity) (arity annot)
-  (setf (get annot 'annotation-arity) arity))
+(defun find-annot (annot-sym)
+  (or (get 'annotations annot-sym)
+      (get 'annotations t)
+      (error "cannot find annotation named ~a" annot-sym)))
 
-(defun annotation-inline-p (annot)
-  "Return non-nil if ANNOT should be expanded on read-time."
-  (get annot 'annotation-inline-p))
+(defun expand-annot (annot annot-sym args)
+  (if (eq (annot-name annot) t)
+      (funcall (annot-expander annot) annot-sym args)
+      (apply (annot-expander annot) args)))
 
-(defun (setf annotation-inline-p) (inline-p annot)
-  (setf (get annot 'annotation-inline-p) inline-p))
+;; default annotation
+(add-annot!
+ (make-annot :name t
+             :arity 1
+             :expander (lambda (self exp) `(,self ,@exp))))
 
-(defun annotation-form (annot args)
-  "Make an annotation-form with ANNOT and ARGS."
-  `(%annotation ,annot ,@args))
 
-(defun annotation-form-p (form)
-  "Return non-nil if FORM is an annotation-form."
-  (and (consp form)
-       (consp (cdr form))
-       (eq (car form) '%annotation)))
+;; (defun annotation-form (annot args)
+;;   "Make an annotation-form with ANNOT and ARGS."
+;;   `(%annotation ,annot ,@args))
+
+;; (defun annotation-form-p (form)
+;;   "Return non-nil if FORM is an annotation-form."
+;;   (and (consp form)
+;;        (consp (cdr form))
+;;        (eq (car form) '%annotation)))

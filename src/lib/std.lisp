@@ -29,7 +29,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; simple one-or-more variables
-;;;; 
+;;;;
 
 (defun %declare-list-or-symbol (vars sym)
   (if (listp vars)

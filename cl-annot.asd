@@ -17,14 +17,14 @@
                               :serial t
                               :components ((:file "utils")
                                            (:file "core")
-                                           (:file "expand")
                                            (:file "syntax")
-                                           (:file "helper")
-                                           (:file "annot")))
-                             (:module "lib"
-                              :serial t
-                              :components ((:file "std")
-                                           (:file "eval-when")
-                                           (:file "doc")
-                                           (:file "class")
-                                           (:file "slot")))))))
+                                           (:file "package")
+                                           (:file "defs")))
+                             ;; (:module "lib"
+                             ;;  :serial t
+                             ;;  :components ((:file "std")
+                             ;;               (:file "eval-when")
+                             ;;               (:file "doc")
+                             ;;               (:file "class")
+                             ;;               (:file "slot")))
+                             ))))
