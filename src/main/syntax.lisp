@@ -16,7 +16,9 @@
 
 (defun read-annotation-arguments (annot stream)
   (loop :repeat (annot-arity annot)
-        :collect (read stream t nil nil)))
+        :for x = (read stream t nil nil)
+        :do (format t "debug: ~a~%" x)
+        :collect x))
 
 (defun annotation-syntax-reader (stream char)
   (declare (ignore char))

@@ -13,8 +13,8 @@
            :progn-form-last
            :progn-form-replace-last
            ;; Definitions
-           :definition-form-symbol
-           :definition-form-type
+           :definition-symbol
+           :definition-type
            ;; Functions
            :replace-function-body
            ;; Classes
@@ -31,15 +31,14 @@
 
 (defun plist-get-all (plist prop)
   "Return all values in PLIST named PROP."
-  (loop for (name value) on plist by #'cddr
-        if (string= prop name)
-          collect value))
+  (loop :for (name value) :on plist :by #'cddr
+        :when (string= prop name)
+          :collect value))
 
 (defun macrop (symbol)
   "Return non-nil if SYMBOL is a macro."
   (and (symbolp symbol)
-       (macro-function symbol)
-       t))
+       (macro-function symbol)))
 
 (defun macroexpand-some (form)
   "Expand FORM once. The result form won't be nil."
@@ -80,32 +79,25 @@ MACROEXPAND-UNTIL-NORMAL-FORM."
 function, the function will be called with the last form and used for
 replacing. If macro forms seen, the macro forms will be expanded using
 MACROEXPAND-UNTIL-NORMAL-FORM."
-  (let ((progn-form (macroexpand-until-normal-form progn-form)))
-    (if (and (consp progn-form)
-             (eq (car progn-form) 'progn))
-        `(,@(butlast progn-form)
-            ,(progn-form-replace-last last (car (last progn-form))))
-        (if (functionp last)
-            (funcall last progn-form)
-            last))))
+  (if (and (consp progn-form)
+           (eq (car progn-form) 'progn))
+      `(,@(butlast progn-form)
+        ,(progn-form-replace-last last (car (last progn-form))))
+      (if (functionp last)
+          (funcall last progn-form)
+          last)))
 
-(defun definition-form-symbol (definition-form)
+
+(defun definition-symbol (exp)
   "Return the symbol of DEFINITION-FORM."
-  (let* ((form (progn-form-last definition-form))
-         (second (when (consp form)
-                   (second form))))
-    (if (consp second)
-        (cond
-          ((eq (car second) 'setf) (second second))
-          (t (first second)))    ; fix for the long-form of defstruct
-        second)))
+  (and (listp exp)
+       (consp (last exp))
+       (cadr exp)))
 
-(defun definition-form-type (definition-form)
-  "Return the type of DEFINITION-FORM."
-  (let* ((form (progn-form-last definition-form))
-         (type (when (consp form)
-                 (car form))))
-    type))
+(defun definition-type (exp)
+  (and (listp exp)
+       (consp (last exp))
+       (car exp)))
 
 (defun replace-function-body (function function-definition-form)
   "Replace the body of FUNCTION-DEFINITION-FORM by calling FUNCTION
@@ -124,15 +116,6 @@ with name, lambda-list and the body as arguments."
                  ,(funcall function name lambda-list body)))))
    function-definition-form))
 
-(defun slot-specifiers (class-definition-form)
-  "Return class-specifiers of CLASS-DEFINITION-FORM."
-  (case (first class-definition-form)
-    (defclass (nth 3 (progn-form-last class-definition-form)))
-    (defstruct (if (stringp (nth 2 (progn-form-last class-definition-form)))
-		   ;; There's a documentation string, fetch the slots after it
-		   (nthcdr 3 (progn-form-last class-definition-form))
-		   ;; There's no documentation string, fetch the slots
-		   (nthcdr 2 (progn-form-last class-definition-form))))))
 
 (defun replace-slot-specifiers (function class-definition-form)
   "Replace slot-specifiers of CLASS-DEFINITION-FORM with FUNCTION. The

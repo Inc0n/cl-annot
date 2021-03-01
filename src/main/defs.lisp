@@ -1,11 +1,10 @@
 
 (defpackage cl-annot.defs
   (:nicknames :annot.defs)
-  (:import-from :annot.core :define-annot)
+  (:import-from :annot.core :define-annot :make-annotated)
   (:use :cl :annot.util))
 (in-package :annot.defs)
 
-(defun definition-symbol (exp) (cadr exp))
 (defun exportable? (exp)
   (and (listp exp)
        (member (car exp) '(defun defmethod defgeneric defvar defparameter
@@ -59,9 +58,9 @@
 (defun annot-type-declare (type typespec exp)
   (cond ((symbolp exp)  `(declare (,type ,typespec ,exp)))
         ((list-of-syms? exp) `(declare (type ,typespec ,@exp)))
-        ((defun? exp) `(progn
-                         (declaim (type ,typespec ',(defun-name exp)))
-                         ,exp))
+        ((defun? exp) (make-annotated
+                       `(declaim (type ,typespec ,(defun-name exp)))
+                       exp))
         (t (error "bad type annot: ~a" exp))))
 
 (define-annot type (typespec exp)
@@ -81,9 +80,9 @@
 (defun annot-inline-declare (inline exp)
   (cond ((symbol? exp)  `(declare (,inline ,exp)))
         ((list-of-syms? exp) `(declare (,inline ,@exp)))
-        ((defun? exp) `(progn
-                         (declaim (,inline ',(defun-name exp)))
-                         ,exp))
+        ((defun? exp) (make-annotated
+                       `(declaim (,inline ',(defun-name exp)))
+                       exp))
         (t (error "bad ~a annot: ~a" inline exp))))
 
 (define-annot inline (exp)

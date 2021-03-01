@@ -19,7 +19,8 @@
                                            (:file "core")
                                            (:file "syntax")
                                            (:file "package")
-                                           (:file "defs")))
+                                           (:file "defs")
+                                           (:file "doc")))
                              ;; (:module "lib"
                              ;;  :serial t
                              ;;  :components ((:file "std")
